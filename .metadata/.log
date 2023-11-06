@@ -1,0 +1,57 @@
+!SESSION 2023-11-06 15:02:39.376 -----------------------------------------------
+eclipse.buildId=Version 1.13.1
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -data /home/erhangok/Documents/GitHub/Microcontroller-Lab -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-11-06 15:02:43.846
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-11-06 15:02:43.847
+!MESSAGE Log4j2 initialized with config file /home/erhangok/Documents/GitHub/Microcontroller-Lab/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-11-06 15:02:51.677
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2023-11-06 15:03:17.682
+!MESSAGE Indexed 'asm' (0 sources, 0 headers) in 0.024 sec: 0 declarations; 0 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2023-11-06 15:03:17.937
+!MESSAGE Indexed 'standalone' (1 sources, 0 headers) in 0.245 sec: 31 declarations; 42 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2023-11-06 15:03:18.772
+!MESSAGE Indexed 'blinky' (1 sources, 16 headers) in 0.783 sec: 653 declarations; 1,634 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2023-11-06 15:04:48.280
+!MESSAGE Indexed 'lab1' (0 sources, 0 headers) in 0.002 sec: 0 declarations; 0 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+!SESSION 2023-11-06 15:42:11.487 -----------------------------------------------
+eclipse.buildId=Version 1.13.1
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-11-06 15:42:21.154
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-11-06 15:42:21.155
+!MESSAGE Log4j2 initialized with config file /home/erhangok/Documents/GitHub/Microcontroller-Lab/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-11-06 15:42:25.829
+!MESSAGE Started RMI Server, listening on port 41337
+!SESSION 2023-11-06 17:52:11.156 -----------------------------------------------
+eclipse.buildId=Version 1.13.1
+java.version=17.0.6
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2023-11-06 17:52:18.144
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2023-11-06 17:52:18.145
+!MESSAGE Log4j2 initialized with config file /home/erhangok/Documents/GitHub/Microcontroller-Lab/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2023-11-06 17:52:22.156
+!MESSAGE Started RMI Server, listening on port 41337
