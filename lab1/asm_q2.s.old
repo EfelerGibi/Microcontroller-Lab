@@ -12,7 +12,7 @@
 .word _edata
 .word _sbss
 .word _ebss
-
+,
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
 

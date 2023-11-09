@@ -13,8 +13,8 @@
 .word _sbss
 .word _ebss
 
-.equ CYCLE
-.equ FREQ, (16800000/3)
+.equ FREQ, (16800000)
+.equ CYCLE_COUNT, (FREQ/3)
 
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
@@ -101,8 +101,9 @@ Default_Handler:
 delay_func:
 	subs r7, #1
 	bne delay_func
-	ldr r7, =FREQ
-	
+	ldr r7, =CYCLE_COUNT
+	bx lr
+
 
 /* main function */
 .section .text
@@ -134,20 +135,21 @@ main:
 	ldr r1, [r0]
 
 	ldr r2,=0x100
-	
-	loop:
-	orrs r1, r1, r2
-	
-	str r1, [r0] //
 
-	b delay
-	
+	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
+
+loop:
+	orrs r1, r1, r2
+	str r1, [r0] //Turn on LED
+
+	bl delay_func
+
 	bics r1, r1, r2
-	
-	str r1, [r0]
-	
-	b delay
+	str r1, [r0] //Turn off LED
+
+	bl delay_func
 	b loop
+
 
 	/* this should never get executed */
 	nop
