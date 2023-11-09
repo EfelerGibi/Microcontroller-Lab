@@ -60,3 +60,5 @@ Debug
 *.launch
 *.log
 libs
+
+.metadata/
