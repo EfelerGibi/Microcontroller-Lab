@@ -50,3 +50,13 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+*.json
+.metadata
+RemoteSystemsTempFiles
+.settings
+*.xml
+Debug
+*.launch
+*.log
+libs
