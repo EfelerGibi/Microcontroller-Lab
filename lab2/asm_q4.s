@@ -159,10 +159,6 @@ main:
 
 loop:
 
-	//mask operations
-	rors r2, r2, r6
-	orrs r1, r1, r2
-	ands r1, r1, r2
 
 	//read button
 	ldr r6, [r5]
@@ -188,8 +184,14 @@ loop:
 	rotate_right:
 		movs r6, #1
 	end:
+			//mask operations
+		rors r2, r2, r6
+		orrs r1, r1, r2
+		ands r1, r1, r2
+		str r1, [r0]
+
 		bl delay_func
-		str r1, [r0] //Turn on LED
+		 //Turn on LED
 
 	b loop
 
