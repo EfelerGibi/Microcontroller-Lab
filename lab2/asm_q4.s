@@ -14,19 +14,24 @@
 .word _ebss
 
 .equ FREQ, (16000000)
-.equ CYCLE_COUNT, (FREQ/3)
+.equ CYCLE_COUNT, (FREQ/30)
 
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
 
 .equ GPIOA_BASE, (0x50000000) //GPIOA Base Adress
 .equ GPIOB_BASE, (0x50000400) //GPIOB Base Adress
+.equ GPIOC_BASE, (0x50000800) //GPIOA Base Adress
+
 
 .equ GPIOA_MODER,      (GPIOA_BASE + (0x00)) // GPIOA MODER register offset
 .equ GPIOB_MODER,      (GPIOB_BASE + (0x00)) // GPIOB MODER register offset
+.equ GPIOC_MODER,      (GPIOC_BASE + (0x00)) // GPIOB MODER register offset
 
-.equ GPIOA_ODR,        (GPIOA_BASE + (0x14)) // GPIOA ODR register offset
+
+.equ GPIOA_IDR,        (GPIOA_BASE + (0x10)) // GPIOA ODR register offset
 .equ GPIOB_ODR,        (GPIOB_BASE + (0x14)) // GPIOB ODR register offset
+.equ GPIOC_ODR,        (GPIOC_BASE + (0x14)) // GPIOB ODR register offset
 
 /* vector table, +1 thumb mode */
 .section .vectors
@@ -112,42 +117,67 @@ main:
 	ldr r0,=RCC_IOPENR
 	ldr r1, [r0]
 
-	movs r2, #0x01 //0000 0001, For enabling RCC mask
+	movs r2, #0x03 //0000 0100, For enabling RCC mask
 	orrs r1, r1, r2
 	str r1, [r0] //Enable RCC mask
 	///////////////////////////////////
 
 	///////////GPIOx_MODER/////////
-	ldr r0,=GPIOA_MODER
+	ldr r0,=GPIOB_MODER
 	ldr r1,[r0]
 
-	ldr r2,=0x30000
-	mvns r2,r2
-	ands r1, r1, r2
-	ldr r2, =0x10000
+	ldr r2,=0xFFFF
+	bics r1, r1, r2
+	ldr r2, =0x5555
 	orrs r1,r1,r2
 
 	str r1, [r0]
 	///////////////////////////////
 
+	///////////GPIOx_MODER/////////
+	ldr r0,=GPIOA_MODER
+	ldr r1,[r0]
+
+	ldr r2,=0xC0000
+	bics r1, r1, r2
+	str r1, [r0]
+	///////////////////////////////
+
 	///////////GPIOA_ODR//////////
-	ldr r0,=GPIOA_ODR
+	ldr r0,=GPIOB_ODR
 	ldr r1, [r0]
 
-	ldr r2,=0x100
+
+	ldr r5, =GPIOA_IDR
+	ldr r4, =0x200 // button read mask
+
+	ldr r2, =0xE0E0E0E0
 
 	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
-
+	movs r6, #31
 loop:
+
+	//mask operations
+	rors r2, r2, r6
 	orrs r1, r1, r2
-	str r1, [r0] //Turn on LED
+	ands r1, r1, r2
 
-	bl delay_func
 
-	bics r1, r1, r2
-	str r1, [r0] //Turn off LED
+	ldr r6, [r5]
+	ands r6, r4
+	bne rotate_left
+	b rotate_right
 
-	bl delay_func
+
+	rotate_left:
+		movs r6, #31
+		b end
+	rotate_right:
+		movs r6, #1
+	end:
+		bl delay_func
+		str r1, [r0] //Turn on LED
+
 	b loop
 
 

@@ -13,20 +13,22 @@
 .word _sbss
 .word _ebss
 
-.equ FREQ, (16000000)
-.equ CYCLE_COUNT, (FREQ/3)
-
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
 
 .equ GPIOA_BASE, (0x50000000) //GPIOA Base Adress
 .equ GPIOB_BASE, (0x50000400) //GPIOB Base Adress
+.equ GPIOC_BASE, (0x50000800) //GPIOA Base Adress
+
 
 .equ GPIOA_MODER,      (GPIOA_BASE + (0x00)) // GPIOA MODER register offset
 .equ GPIOB_MODER,      (GPIOB_BASE + (0x00)) // GPIOB MODER register offset
+.equ GPIOC_MODER,      (GPIOC_BASE + (0x00)) // GPIOB MODER register offset
 
-.equ GPIOA_ODR,        (GPIOA_BASE + (0x14)) // GPIOA ODR register offset
+
+.equ GPIOA_IDR,        (GPIOA_BASE + (0x10)) // GPIOA ODR register offset
 .equ GPIOB_ODR,        (GPIOB_BASE + (0x14)) // GPIOB ODR register offset
+.equ GPIOC_ODR,        (GPIOC_BASE + (0x14)) // GPIOB ODR register offset
 
 /* vector table, +1 thumb mode */
 .section .vectors
@@ -98,12 +100,6 @@ init_data:
 Default_Handler:
 	b Default_Handler
 
-delay_func:
-	subs r7, #1
-	bne delay_func
-	ldr r7, =CYCLE_COUNT
-	bx lr
-
 
 /* main function */
 .section .text
@@ -112,47 +108,58 @@ main:
 	ldr r0,=RCC_IOPENR
 	ldr r1, [r0]
 
-	movs r2, #0x01 //0000 0001, For enabling RCC mask
+	movs r2, #0x5 //0000 0001, For enabling RCC mask
 	orrs r1, r1, r2
 	str r1, [r0] //Enable RCC mask
 	///////////////////////////////////
 
 	///////////GPIOx_MODER/////////
-	ldr r0,=GPIOA_MODER
+	ldr r0,=GPIOC_MODER
 	ldr r1,[r0]
 
-	ldr r2,=0x30000
-	mvns r2,r2
-	ands r1, r1, r2
-	ldr r2, =0x10000
+	ldr r2,=0x3000
+	bics r1, r1, r2
+	ldr r2, =0x1000
 	orrs r1,r1,r2
 
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOA_ODR//////////
-	ldr r0,=GPIOA_ODR
+	///////////GPIOx_MODER/////////
+	ldr r0,=GPIOA_MODER
+	ldr r1,[r0]
+
+	ldr r2,=0xC0000
+	bics r1, r1, r2
+	str r1, [r0]
+	///////////////////////////////
+
+	///////////GPIOC_ODR//////////
+	ldr r0,=GPIOC_ODR
 	ldr r1, [r0]
 
-	ldr r2,=0x100
+	ldr r5, =GPIOA_IDR
 
-	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
+	ldr r4, =0x200 // button read mask
+	ldr r2, =0x40 // set led mask
 
 loop:
-	orrs r1, r1, r2
-	str r1, [r0] //Turn on LED
 
-	bl delay_func
+	ldr r6, [r5]
+	ands r6, r4
+	bne turn_on
+	b turn_off
+	turn_on:
+		orrs r1, r1, r2
+		b end
+	turn_off:
+		bics r1, r1, r2
+	end:
+		str r1, [r0]
 
-	bics r1, r1, r2
-	str r1, [r0] //Turn off LED
 
-	bl delay_func
+
 	b loop
-
-
-	/* this should never get executed */
-	nop
 
 
 
