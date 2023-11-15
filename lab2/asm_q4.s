@@ -155,6 +155,8 @@ main:
 
 	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
 	movs r6, #31
+	ldr r3, =0xFFFFFFFF
+
 loop:
 
 	//mask operations
@@ -162,13 +164,24 @@ loop:
 	orrs r1, r1, r2
 	ands r1, r1, r2
 
-
+	//read button
 	ldr r6, [r5]
 	ands r6, r4
+	beq pressed
+	b not_pressed
+	pressed:
+		mvns r3, r3
+		wait_button_release:
+			ldr r6, [r5]
+			ands r6, r4
+			beq wait_button_release
+	not_pressed:
+
+
+
+	movs r3, r3
 	bne rotate_left
 	b rotate_right
-
-
 	rotate_left:
 		movs r6, #31
 		b end
