@@ -166,16 +166,14 @@ loop:
 	beq pressed
 	b not_pressed
 	pressed:
-		mvns r3, r3
 		wait_button_release:
-			ldr r6, [r5]
-			ands r6, r4
+			ldr r6, [r5] //read button register
+			ands r6, r4 //Apply button read mask
 			beq wait_button_release
+		mvns r3, r3 //invert the rotate direction
 	not_pressed:
 
-
-
-	movs r3, r3
+	cmp r3, #0 //If r3 is zero, rotate right, else rotate left.
 	bne rotate_left
 	b rotate_right
 	rotate_left:
@@ -184,14 +182,14 @@ loop:
 	rotate_right:
 		movs r6, #1
 	end:
-			//mask operations
+		//mask operations
 		rors r2, r2, r6
 		orrs r1, r1, r2
 		ands r1, r1, r2
-		str r1, [r0]
+		str r1, [r0] // Store the updated ODR values
 
 		bl delay_func
-		 //Turn on LED
+
 
 	b loop
 
