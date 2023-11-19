@@ -125,7 +125,7 @@ main:
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOx_MODER/////////
+	///////////GPIOA_MODER/////////
 	ldr r0,=GPIOA_MODER
 	ldr r1,[r0]
 
@@ -142,7 +142,7 @@ main:
 
 	ldr r4, =0x200 // button read mask
 	ldr r2, =0x40 // set led mask
-
+	///////////////////////////////
 loop:
 
 	ldr r6, [r5]
