@@ -113,7 +113,7 @@ delay_func:
 /* main function */
 .section .text
 main:
-	//////Enable RCC_IOPENR For A//////
+	//////Enable RCC_IOPENR For B//////
 	ldr r0,=RCC_IOPENR
 	ldr r1, [r0]
 
@@ -134,7 +134,7 @@ main:
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOA_ODR//////////
+	///////////GPIOB_ODR//////////
 	ldr r0,=GPIOB_ODR
 	ldr r1, [r0]
 
