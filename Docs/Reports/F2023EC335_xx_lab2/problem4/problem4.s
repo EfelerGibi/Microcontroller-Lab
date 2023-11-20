@@ -148,23 +148,32 @@ main:
 	ldr r1, [r0]
 
 
+	ldr r5, =GPIOA_IDR
+	ldr r4, =0x200 // button read mask
 
-	ldr r2, =0x000000E0
+	ldr r2, =0xE0E0E0E0
 
 	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
 	movs r6, #31
-	ldr r3, =0x06
-	movs r5, #0x0
+	ldr r3, =0xFFFFFFFF
 
 loop:
-	bounce_func:
-		subs r3, r3, #1
-		bgt bounce_end
-		reset_bounce:
-			movs r3, #5
-			mvns r5, r5
-		bounce_end:
-	movs r5, r5
+
+
+	//read button
+	ldr r6, [r5]
+	ands r6, r4
+	beq pressed
+	b not_pressed
+	pressed:
+		wait_button_release:
+			ldr r6, [r5] //read button register
+			ands r6, r4 //Apply button read mask
+			beq wait_button_release
+		mvns r3, r3 //invert the rotate direction
+	not_pressed:
+
+	cmp r3, #0 //If r3 is zero, rotate right, else rotate left.
 	bne rotate_left
 	b rotate_right
 	rotate_left:
@@ -173,14 +182,14 @@ loop:
 	rotate_right:
 		movs r6, #1
 	end:
-			//mask operations
+		//mask operations
 		rors r2, r2, r6
 		orrs r1, r1, r2
 		ands r1, r1, r2
-		str r1, [r0]
+		str r1, [r0] // Store the updated ODR values
 
 		bl delay_func
-		 //Turn on LED
+
 
 	b loop
 

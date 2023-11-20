@@ -157,6 +157,10 @@ main:
 	movs r5, #0x0
 
 loop:
+
+
+
+
 	bounce_func:
 		subs r3, r3, #1
 		bgt bounce_end

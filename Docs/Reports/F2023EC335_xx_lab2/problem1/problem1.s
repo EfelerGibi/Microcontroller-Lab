@@ -14,7 +14,7 @@
 .word _ebss
 
 .equ FREQ, (16000000)
-.equ CYCLE_COUNT, (FREQ/30)
+.equ CYCLE_COUNT, (FREQ/3)
 
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
@@ -29,7 +29,7 @@
 .equ GPIOC_MODER,      (GPIOC_BASE + (0x00)) // GPIOB MODER register offset
 
 
-.equ GPIOA_IDR,        (GPIOA_BASE + (0x10)) // GPIOA ODR register offset
+.equ GPIOA_ODR,        (GPIOA_BASE + (0x14)) // GPIOA ODR register offset
 .equ GPIOB_ODR,        (GPIOB_BASE + (0x14)) // GPIOB ODR register offset
 .equ GPIOC_ODR,        (GPIOC_BASE + (0x14)) // GPIOB ODR register offset
 
@@ -113,75 +113,45 @@ delay_func:
 /* main function */
 .section .text
 main:
-	//////Enable RCC_IOPENR For A//////
+	//////Enable RCC_IOPENR For C//////
 	ldr r0,=RCC_IOPENR
 	ldr r1, [r0]
 
-	movs r2, #0x03 //0000 0100, For enabling RCC mask
+	movs r2, #0x04 //0000 0100, For enabling RCC mask
 	orrs r1, r1, r2
 	str r1, [r0] //Enable RCC mask
 	///////////////////////////////////
 
 	///////////GPIOx_MODER/////////
-	ldr r0,=GPIOB_MODER
+	ldr r0,=GPIOC_MODER
 	ldr r1,[r0]
 
-	ldr r2,=0xFFFF
+	ldr r2,=0x3000
 	bics r1, r1, r2
-	ldr r2, =0x5555
+	ldr r2, =0x1000
 	orrs r1,r1,r2
 
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOx_MODER/////////
-	ldr r0,=GPIOA_MODER
-	ldr r1,[r0]
-
-	ldr r2,=0xC0000
-	bics r1, r1, r2
-	str r1, [r0]
-	///////////////////////////////
-
-	///////////GPIOA_ODR//////////
-	ldr r0,=GPIOB_ODR
+	///////////GPIOC_ODR//////////
+	ldr r0,=GPIOC_ODR
 	ldr r1, [r0]
 
-
-
-	ldr r2, =0x000000E0
+	ldr r2,=0x40
 
 	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
-	movs r6, #31
-	ldr r3, =0x06
-	movs r5, #0x0
 
 loop:
-	bounce_func:
-		subs r3, r3, #1
-		bgt bounce_end
-		reset_bounce:
-			movs r3, #5
-			mvns r5, r5
-		bounce_end:
-	movs r5, r5
-	bne rotate_left
-	b rotate_right
-	rotate_left:
-		movs r6, #31
-		b end
-	rotate_right:
-		movs r6, #1
-	end:
-			//mask operations
-		rors r2, r2, r6
-		orrs r1, r1, r2
-		ands r1, r1, r2
-		str r1, [r0]
+	orrs r1, r1, r2
+	str r1, [r0] //Turn on LED
 
-		bl delay_func
-		 //Turn on LED
+	bl delay_func
 
+	bics r1, r1, r2
+	str r1, [r0] //Turn off LED
+
+	bl delay_func
 	b loop
 
 

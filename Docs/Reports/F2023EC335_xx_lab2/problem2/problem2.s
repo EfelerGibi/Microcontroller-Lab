@@ -13,9 +13,6 @@
 .word _sbss
 .word _ebss
 
-.equ FREQ, (16000000)
-.equ CYCLE_COUNT, (FREQ/30)
-
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
 
@@ -103,12 +100,6 @@ init_data:
 Default_Handler:
 	b Default_Handler
 
-delay_func:
-	subs r7, #1
-	bne delay_func
-	ldr r7, =CYCLE_COUNT
-	bx lr
-
 
 /* main function */
 .section .text
@@ -117,24 +108,24 @@ main:
 	ldr r0,=RCC_IOPENR
 	ldr r1, [r0]
 
-	movs r2, #0x03 //0000 0100, For enabling RCC mask
+	movs r2, #0x5 //0000 0001, For enabling RCC mask
 	orrs r1, r1, r2
 	str r1, [r0] //Enable RCC mask
 	///////////////////////////////////
 
 	///////////GPIOx_MODER/////////
-	ldr r0,=GPIOB_MODER
+	ldr r0,=GPIOC_MODER
 	ldr r1,[r0]
 
-	ldr r2,=0xFFFF
+	ldr r2,=0x3000
 	bics r1, r1, r2
-	ldr r2, =0x5555
+	ldr r2, =0x1000
 	orrs r1,r1,r2
 
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOx_MODER/////////
+	///////////GPIOA_MODER/////////
 	ldr r0,=GPIOA_MODER
 	ldr r1,[r0]
 
@@ -143,50 +134,32 @@ main:
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOA_ODR//////////
-	ldr r0,=GPIOB_ODR
+	///////////GPIOC_ODR//////////
+	ldr r0,=GPIOC_ODR
 	ldr r1, [r0]
 
+	ldr r5, =GPIOA_IDR
 
-
-	ldr r2, =0x000000E0
-
-	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
-	movs r6, #31
-	ldr r3, =0x06
-	movs r5, #0x0
-
+	ldr r4, =0x200 // button read mask
+	ldr r2, =0x40 // set led mask
+	///////////////////////////////
 loop:
-	bounce_func:
-		subs r3, r3, #1
-		bgt bounce_end
-		reset_bounce:
-			movs r3, #5
-			mvns r5, r5
-		bounce_end:
-	movs r5, r5
-	bne rotate_left
-	b rotate_right
-	rotate_left:
-		movs r6, #31
-		b end
-	rotate_right:
-		movs r6, #1
-	end:
-			//mask operations
-		rors r2, r2, r6
+
+	ldr r6, [r5]
+	ands r6, r4
+	bne turn_on
+	b turn_off
+	turn_on:
 		orrs r1, r1, r2
-		ands r1, r1, r2
+		b end
+	turn_off:
+		bics r1, r1, r2
+	end:
 		str r1, [r0]
 
-		bl delay_func
-		 //Turn on LED
+
 
 	b loop
-
-
-	/* this should never get executed */
-	nop
 
 
 
