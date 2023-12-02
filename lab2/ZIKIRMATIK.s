@@ -14,7 +14,7 @@
 .word _ebss
 
 .equ FREQ, (16000000)
-.equ CYCLE_COUNT, (FREQ/3)
+.equ CYCLE_COUNT, (FREQ/30)
 
 .equ RCC_BASE,         (0x40021000)          // RCC base address
 .equ RCC_IOPENR,       (RCC_BASE   + (0x34)) // RCC IOPENR register offset
@@ -29,7 +29,7 @@
 .equ GPIOC_MODER,      (GPIOC_BASE + (0x00)) // GPIOB MODER register offset
 
 
-.equ GPIOA_ODR,        (GPIOA_BASE + (0x14)) // GPIOA ODR register offset
+.equ GPIOA_IDR,        (GPIOA_BASE + (0x10)) // GPIOA ODR register offset
 .equ GPIOB_ODR,        (GPIOB_BASE + (0x14)) // GPIOB ODR register offset
 .equ GPIOC_ODR,        (GPIOC_BASE + (0x14)) // GPIOB ODR register offset
 
@@ -113,11 +113,11 @@ delay_func:
 /* main function */
 .section .text
 main:
-	//////Enable RCC_IOPENR For B//////
+	//////Enable RCC_IOPENR For A//////
 	ldr r0,=RCC_IOPENR
 	ldr r1, [r0]
 
-	movs r2, #0x02 //0000 0100, For enabling RCC mask
+	movs r2, #0x03 //0000 0100, For enabling RCC mask
 	orrs r1, r1, r2
 	str r1, [r0] //Enable RCC mask
 	///////////////////////////////////
@@ -134,24 +134,49 @@ main:
 	str r1, [r0]
 	///////////////////////////////
 
-	///////////GPIOB_ODR//////////
+	///////////GPIOx_MODER/////////
+	ldr r0,=GPIOA_MODER
+	ldr r1,[r0]
+
+	ldr r2,=0xC0000
+	bics r1, r1, r2
+	str r1, [r0]
+	///////////////////////////////
+
+	///////////GPIOA_ODR//////////
 	ldr r0,=GPIOB_ODR
 	ldr r1, [r0]
 
-	ldr r2,=0xFF
+
+	ldr r5, =GPIOA_IDR
+	ldr r4, =0x200 // button read mask
+
+	ldr r2, =0x00000000
 
 	ldr r7, =CYCLE_COUNT //Set R7 to CYCLE_COUNT
+	movs r6, #31
+	ldr r3, =0xFFFFFFFF
 
 loop:
-	orrs r1, r1, r2
-	str r1, [r0] //Turn on LED
+
+
+	//read button
+	ldr r6, [r5]
+	ands r6, r4
+	beq pressed
+	b not_pressed
+	pressed:
+		wait_button_release:
+			ldr r6, [r5] //read button register
+			ands r6, r4 //Apply button read mask
+			beq wait_button_release
+		adds r2, #1 //invert the rotate direction
+	not_pressed:
+
+	str r2, [r0]
 
 	bl delay_func
 
-	bics r1, r1, r2
-	str r1, [r0] //Turn off LED
-
-	bl delay_func
 	b loop
 
 
