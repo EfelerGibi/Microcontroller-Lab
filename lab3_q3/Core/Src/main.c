@@ -1,16 +1,23 @@
 #include "stm32g0xx.h"
 
+#define TIM_AutoReload 16000//1600
 uint16_t counter = 0;
+int D1;
+int D2;
+int D3;
+int D4;
 
 void check_counter();
 void LedInit();
 void ToggleLed();
-void TimerInit();
+void Timer2Init();
+void Timer3Init();
 void ButtonInit();
 void EnableTimer();
 void DisableTimer();
-void setPanel(uint16_t num);
+void setPanel();
 void PanelInit();
+void setDigit();
 
 
 static const uint8_t digitPins[16] = {
@@ -35,12 +42,13 @@ static const uint8_t digitPins[16] = {
 
 
 int main(void) {
-
 	LedInit();
-	TimerInit();
+
+	Timer2Init();
+
 	ButtonInit();
 	PanelInit();
-
+	setDigit(GPIO_ODR_OD5,GPIO_ODR_OD6,0);
     while(1) {
     }
     return 0;
@@ -65,13 +73,13 @@ void ToggleLed()
 }
 
 
-void TimerInit()
+void Timer2Init()
 {
 	RCC->APBENR1 |= RCC_APBENR1_TIM2EN_Msk;
 
 	TIM2->CNT = 0;
-	TIM2->PSC = 0;
-	TIM2->ARR = (uint32_t) 16000000/1600;//1600
+	TIM2->PSC = 160;
+	TIM2->ARR = (uint32_t) 25;//1600
 	TIM2->DIER |= (1U<<0);
 
 	NVIC_EnableIRQ(TIM2_IRQn);
@@ -79,19 +87,18 @@ void TimerInit()
 	TIM2->SR &= ~(1U<<0);
 
 	TIM2->EGR |= (1U<<0); // Reset timer
-	//TIM2->CR1 |= (1U<<0); // Enable timer
 
-	DisableTimer();
+	DisableTimer(TIM2);
 }
 
-void EnableTimer()
+void EnableTimer(TIM_TypeDef* TIM)
 {
-	TIM2->CR1 |= (1U<<0);
+	TIM->CR1 |= (1U<<0);
 }
 
-void DisableTimer()
+void DisableTimer(TIM_TypeDef* TIM)
 {
-	TIM2->CR1 &= ~(1U<<0);
+	TIM->CR1 &= ~(1U<<0);
 }
 
 
@@ -99,14 +106,39 @@ void TIM2_IRQHandler(void){
 	TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
 	counter++;
 
-	if(counter>=9999)
+	if(counter>=40000)
 	{
-		DisableTimer();
+		DisableTimer(TIM2);
 		GPIOC->ODR ^= (1U << 6);
 		counter = 0;
 	}
+	int number_counter = counter/4;
+	D1 = number_counter/1000;
+	D2 = (number_counter%1000)/100;
+	D3 = (number_counter%100)/10;
+	D4 = number_counter%10;
+	if (counter%4 == 0){
+		setDigit(GPIO_ODR_OD5,GPIO_ODR_OD6,D4);
+	}else if(counter%3 == 0){
+		setDigit(GPIO_ODR_OD4,GPIO_ODR_OD5,D3);
+	}else if(counter%2 == 0){
+		setDigit(GPIO_ODR_OD1,GPIO_ODR_OD4,D2);
+	}else if(counter%1 == 0){
+		setDigit(GPIO_ODR_OD6,GPIO_ODR_OD1,D1);
+	}
+}
 
-	setPanel(counter);
+void setDigit(uint32_t mask1,uint32_t mask2,int digit)
+{
+    //Disable D1,D2,D3,D4
+    GPIOA->ODR |= GPIO_ODR_OD1;
+	GPIOA->ODR |= GPIO_ODR_OD4;
+	GPIOA->ODR |= GPIO_ODR_OD5;
+	GPIOA->ODR |= GPIO_ODR_OD6;
+
+    GPIOA->ODR &= ~mask2; //Enable mask2
+    GPIOB->ODR |= digitPins[digit];
+    GPIOB->ODR &= digitPins[digit];
 }
 
 void ButtonInit()
@@ -131,7 +163,7 @@ void EXTI0_1_IRQHandler(void){
 	EXTI->FPR1 |= (1<<0);
 	counter = 0;
 	GPIOC->ODR &= ~(1U << 6);
-	EnableTimer();
+	EnableTimer(TIM2);
 }
 
 void PanelInit()
@@ -161,31 +193,5 @@ void PanelInit()
 	GPIOA->ODR |= GPIO_ODR_OD6;
 }
 
-void setPanel(uint16_t num)
-{
-	int D1 = counter/1000;
-	int D2 = (counter%1000)/100;
-	int D3 = (counter%100)/10;
-	int D4 = counter%10;
 
-    GPIOA->ODR &= ~GPIO_ODR_OD1; //Enable D1
-    GPIOB->ODR |= digitPins[D1];
-    GPIOB->ODR &= digitPins[D1];
-    GPIOA->ODR |= GPIO_ODR_OD1; //Disable D1
-
-    GPIOA->ODR &= ~GPIO_ODR_OD4; //Enable D2
-    GPIOB->ODR |= digitPins[D2];
-    GPIOB->ODR &= digitPins[D2];
-    GPIOA->ODR |= GPIO_ODR_OD4; //Disable D2
-
-    GPIOA->ODR &= ~GPIO_ODR_OD5; //Enable D3
-    GPIOB->ODR |= digitPins[D3];
-    GPIOB->ODR &= digitPins[D3];
-    GPIOA->ODR |= GPIO_ODR_OD5; //Disable D3
-
-    GPIOA->ODR &= ~GPIO_ODR_OD6; //Enable D4
-    GPIOB->ODR |= digitPins[D4];
-    GPIOB->ODR &= digitPins[D4];
-    GPIOA->ODR |= GPIO_ODR_OD6; //Disable D4
-}
 
