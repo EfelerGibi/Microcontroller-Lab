@@ -44,9 +44,17 @@ void SysTickInit() {
     NVIC_SetPriority(SysTick_IRQn, 0);
 }
 
+void check_counter(){
+	counter++;
+	if (counter==1000)
+	{
+		GPIOC->ODR ^= (1U << 6);
+	}
+}
+
 void delay_ms(uint32_t delay) {
-    uint32_t startMillis = millis;
-    while ((millis - startMillis) < delay) {
+    millis = 0;
+    while (millis < delay) {
         // Wait for the specified duration
     }
 }
