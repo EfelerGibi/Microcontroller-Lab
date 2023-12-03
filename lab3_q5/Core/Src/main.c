@@ -2,7 +2,7 @@
 
 #define WDG_RELOAD_COMMAND 0xAAAA
 #define WDG_RELOAD_VAL 10000 //PSC=7
-#define IWDG_PR 111
+#define IWDG_PR 7
 //For 12 seconds(To observe it resets if the timer does not stop after 10 seconds
 
 #define TIM_AutoReload 16000//1600
