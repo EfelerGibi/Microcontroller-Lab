@@ -69,11 +69,11 @@ void ButtonInit()
 	RCC->IOPENR |= RCC_IOPENR_GPIOAEN_Msk;
 	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk;
 	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD0_Msk;
-	GPIOA->PUPDR |=  (1U<<0);
+	GPIOA->PUPDR |=  (1U<<0); //GPIO port pull-up/pull-down register
 
-	RCC->APBENR2 |= (1U<<0);
-	EXTI->RTSR1 |= (1U<<0);
-	EXTI->IMR1 |= (1U<<0);
+	RCC->APBENR2 |= (1U<<0); //APB peripheral clock enable register
+	EXTI->RTSR1 |= (1U<<0); //EXTI rising trigger selection register
+	EXTI->IMR1 |= (1U<<0);  //EXTI CPU wakeup with interrupt mask register
 
     EXTI->FTSR1 |= (1U<<0);        // Enable EXTI on Falling edge
 	EXTI->RTSR1 &= ~(1U<<0);       // Disable EXTI on Rising edge

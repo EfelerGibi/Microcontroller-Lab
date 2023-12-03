@@ -17,7 +17,7 @@ void EnableTimer();
 void DisableTimer();
 void setPanel();
 void PanelInit();
-void setDigit();
+void setDigit(uint32_t mask,int digit);
 
 
 static const uint8_t digitPins[16] = {
@@ -48,7 +48,7 @@ int main(void) {
 
 	ButtonInit();
 	PanelInit();
-	setDigit(GPIO_ODR_OD5,GPIO_ODR_OD6,0);
+	setDigit(GPIO_ODR_OD6,0);
     while(1) {
     }
     return 0;
@@ -118,17 +118,17 @@ void TIM2_IRQHandler(void){
 	D3 = (number_counter%100)/10;
 	D4 = number_counter%10;
 	if (counter%4 == 0){
-		setDigit(GPIO_ODR_OD5,GPIO_ODR_OD6,D4);
+		setDigit(GPIO_ODR_OD6,D4);
 	}else if(counter%3 == 0){
-		setDigit(GPIO_ODR_OD4,GPIO_ODR_OD5,D3);
+		setDigit(GPIO_ODR_OD5,D3);
 	}else if(counter%2 == 0){
-		setDigit(GPIO_ODR_OD1,GPIO_ODR_OD4,D2);
+		setDigit(GPIO_ODR_OD4,D2);
 	}else if(counter%1 == 0){
-		setDigit(GPIO_ODR_OD6,GPIO_ODR_OD1,D1);
+		setDigit(GPIO_ODR_OD1,D1);
 	}
 }
 
-void setDigit(uint32_t mask1,uint32_t mask2,int digit)
+void setDigit(uint32_t mask,int digit)
 {
     //Disable D1,D2,D3,D4
     GPIOA->ODR |= GPIO_ODR_OD1;
@@ -136,7 +136,7 @@ void setDigit(uint32_t mask1,uint32_t mask2,int digit)
 	GPIOA->ODR |= GPIO_ODR_OD5;
 	GPIOA->ODR |= GPIO_ODR_OD6;
 
-    GPIOA->ODR &= ~mask2; //Enable mask2
+    GPIOA->ODR &= ~mask; //Enable mask2
     GPIOB->ODR |= digitPins[digit];
     GPIOB->ODR &= digitPins[digit];
 }
