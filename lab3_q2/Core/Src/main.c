@@ -10,8 +10,6 @@ void ToggleLed();
 void TimerInit();
 void ButtonInit();
 
-
-
 int main(void) {
 
 	LedInit();
@@ -82,7 +80,6 @@ void ButtonInit()
 
 	NVIC_SetPriority(EXTI0_1_IRQn,0);
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
-
 }
 
 void EXTI0_1_IRQHandler(void){

@@ -1,0 +1,191 @@
+#include "stm32g0xx.h"
+
+uint16_t counter = 0;
+
+void check_counter();
+void LedInit();
+void ToggleLed();
+void TimerInit();
+void ButtonInit();
+void EnableTimer();
+void DisableTimer();
+void setPanel(uint16_t num);
+void PanelInit();
+
+
+static const uint8_t digitPins[16] = {
+    0x3F, // 0
+    0x06, // 1
+    0x5B, // 2
+    0x4F, // 3
+    0x66, // 4
+    0x6D, // 5
+    0x7D, // 6
+    0x07, // 7
+    0x7F, // 8
+    0x6F, // 9
+    0x77, // A
+    0x7C, // B
+    0x39, // C
+    0x5E, // D
+    0x79, // E
+    0x71  // F
+};
+
+
+
+int main(void) {
+
+	LedInit();
+	TimerInit();
+	ButtonInit();
+	PanelInit();
+
+    while(1) {
+    }
+    return 0;
+}
+
+void LedInit()
+{
+    /* Enable GPIOC clock */
+    RCC->IOPENR |= (1U << 2);
+
+    /* Setup PC6 as output */
+    GPIOC->MODER &= ~(3U << 2*6);
+    GPIOC->MODER |= (1U << 2*6);
+
+    /* Turn on LED */
+    GPIOC->ODR |= (1U << 6);
+}
+
+void ToggleLed()
+{
+	GPIOC->ODR ^= (1U << 6);
+}
+
+
+void TimerInit()
+{
+	RCC->APBENR1 |= RCC_APBENR1_TIM2EN_Msk;
+
+	TIM2->CNT = 0;
+	TIM2->PSC = 0;
+	TIM2->ARR = (uint32_t) 16000000/1600;//1600
+	TIM2->DIER |= (1U<<0);
+
+	NVIC_EnableIRQ(TIM2_IRQn);
+	NVIC_SetPriority(TIM2_IRQn,3);
+	TIM2->SR &= ~(1U<<0);
+
+	TIM2->EGR |= (1U<<0); // Reset timer
+	//TIM2->CR1 |= (1U<<0); // Enable timer
+
+	DisableTimer();
+}
+
+void EnableTimer()
+{
+	TIM2->CR1 |= (1U<<0);
+}
+
+void DisableTimer()
+{
+	TIM2->CR1 &= ~(1U<<0);
+}
+
+
+void TIM2_IRQHandler(void){
+	TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
+	counter++;
+
+	if(counter>=9999)
+	{
+		DisableTimer();
+		GPIOC->ODR ^= (1U << 6);
+		counter = 0;
+	}
+
+	setPanel(counter);
+}
+
+void ButtonInit()
+{
+	RCC->IOPENR |= RCC_IOPENR_GPIOAEN_Msk;
+	GPIOA->MODER &= ~GPIO_MODER_MODE0_Msk;
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD0_Msk;
+	GPIOA->PUPDR |=  (1U<<0);
+
+	RCC->APBENR2 |= (1U<<0);
+	EXTI->RTSR1 |= (1U<<0);
+	EXTI->IMR1 |= (1U<<0);
+
+    EXTI->FTSR1 |= (1U<<0);        // Enable EXTI on Falling edge
+	EXTI->RTSR1 &= ~(1U<<0);       // Disable EXTI on Rising edge
+
+	NVIC_SetPriority(EXTI0_1_IRQn,0);
+	NVIC_EnableIRQ(EXTI0_1_IRQn);
+}
+
+void EXTI0_1_IRQHandler(void){
+	EXTI->FPR1 |= (1<<0);
+	counter = 0;
+	GPIOC->ODR &= ~(1U << 6);
+	EnableTimer();
+}
+
+void PanelInit()
+{
+	RCC->IOPENR |= RCC_IOPENR_GPIOBEN_Msk;
+    GPIOB->MODER &= ~0xFFFF;
+    GPIOB->MODER |= 0x5555;
+    GPIOB->ODR |= digitPins[0];
+
+
+    GPIOA->MODER &= ~GPIO_MODER_MODE1_Msk;
+    GPIOA->MODER |= GPIO_MODER_MODE1_0;
+
+    GPIOA->MODER &= ~GPIO_MODER_MODE4_Msk;
+    GPIOA->MODER |= GPIO_MODER_MODE4_0;
+
+    GPIOA->MODER &= ~GPIO_MODER_MODE5_Msk;
+    GPIOA->MODER |= GPIO_MODER_MODE5_0;
+
+    GPIOA->MODER &= ~GPIO_MODER_MODE6_Msk;
+    GPIOA->MODER |= GPIO_MODER_MODE6_0; //pa1 pa4 pa5 pa6
+
+    //Disable D1,D2,D3,D4
+    GPIOA->ODR |= GPIO_ODR_OD1;
+	GPIOA->ODR |= GPIO_ODR_OD4;
+	GPIOA->ODR |= GPIO_ODR_OD5;
+	GPIOA->ODR |= GPIO_ODR_OD6;
+}
+
+void setPanel(uint16_t num)
+{
+	int D1 = counter/1000;
+	int D2 = (counter%1000)/100;
+	int D3 = (counter%100)/10;
+	int D4 = counter%10;
+
+    GPIOA->ODR &= ~GPIO_ODR_OD1; //Enable D1
+    GPIOB->ODR |= digitPins[D1];
+    GPIOB->ODR &= digitPins[D1];
+    GPIOA->ODR |= GPIO_ODR_OD1; //Disable D1
+
+    GPIOA->ODR &= ~GPIO_ODR_OD4; //Enable D2
+    GPIOB->ODR |= digitPins[D2];
+    GPIOB->ODR &= digitPins[D2];
+    GPIOA->ODR |= GPIO_ODR_OD4; //Disable D2
+
+    GPIOA->ODR &= ~GPIO_ODR_OD5; //Enable D3
+    GPIOB->ODR |= digitPins[D3];
+    GPIOB->ODR &= digitPins[D3];
+    GPIOA->ODR |= GPIO_ODR_OD5; //Disable D3
+
+    GPIOA->ODR &= ~GPIO_ODR_OD6; //Enable D4
+    GPIOB->ODR |= digitPins[D4];
+    GPIOB->ODR &= digitPins[D4];
+    GPIOA->ODR |= GPIO_ODR_OD6; //Disable D4
+}
+
