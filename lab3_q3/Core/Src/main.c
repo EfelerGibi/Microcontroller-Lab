@@ -160,7 +160,7 @@ void ButtonInit()
 }
 
 void EXTI0_1_IRQHandler(void){
-	EXTI->FPR1 |= (1<<0);
+	EXTI->FPR1 |= (1<<0); //EXTI falling edge pending register 1 (EXTI_FPR1)
 	counter = 0;
 	GPIOC->ODR &= ~(1U << 6);
 	EnableTimer(TIM2);

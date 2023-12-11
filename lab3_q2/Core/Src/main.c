@@ -47,7 +47,7 @@ void TimerInit()
 	TIM2->CNT = 0;
 	TIM2->PSC = 0;
 	TIM2->ARR = (uint32_t) 16000000;
-	TIM2->DIER |= (1U<<0);
+	TIM2->DIER |= (1U<<0); //Enable interrupt
 
 	NVIC_EnableIRQ(TIM2_IRQn);
 	NVIC_SetPriority(TIM2_IRQn,3);
@@ -72,7 +72,7 @@ void ButtonInit()
 	GPIOA->PUPDR |=  (1U<<0); //GPIO port pull-up/pull-down register
 
 	RCC->APBENR2 |= (1U<<0); //APB peripheral clock enable register
-	EXTI->RTSR1 |= (1U<<0); //EXTI rising trigger selection register
+	EXTI->RTSR1 |= (1U<<0); //NOT NECESSARY
 	EXTI->IMR1 |= (1U<<0);  //EXTI CPU wakeup with interrupt mask register
 
     EXTI->FTSR1 |= (1U<<0);        // Enable EXTI on Falling edge
