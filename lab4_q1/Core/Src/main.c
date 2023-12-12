@@ -19,7 +19,8 @@ int main()
 	UART_Init();
 	while(1)
 	{
-		print(uart_rx());
+
+		print("hello world \n");
 
 	}
 }
