@@ -55,20 +55,24 @@ void SysTick_Handler(void) {
 
 void setDutyCycle(uint16_t dutyCycle)
 {
-	TIM3->CCR1 = dutyCycle;
+	TIM1->CCR3 = dutyCycle;
 }
 
 void PWM_Init() {
-    RCC->IOPENR |= RCC_IOPENR_GPIOCEN;   // Enable GPIOC clock
-    RCC->APBENR1 |= RCC_APBENR1_TIM3EN;  // Enable TIM3 clock
+    RCC->IOPENR |= RCC_IOPENR_GPIOAEN;   // Enable GPIOA clock
+    RCC->APBENR2 |= RCC_APBENR2_TIM1EN;  // Enable TIM1 clock
 
-    GPIOC->MODER &= ~GPIO_MODER_MODE6;   // Clear mode bits
-    GPIOC->MODER |= GPIO_MODER_MODE6_1;  // Set to Alternate Function mode
-    GPIOC->AFR[0] |= GPIO_AFRL_AFSEL6_0; // AF1 for TIM3_CH1
+    GPIOA->MODER &= ~GPIO_MODER_MODE10;   // Clear mode bits for PA10
+    GPIOA->MODER |= GPIO_MODER_MODE10_1;  // Set PA10 to Alternate Function mode
 
-    TIM3->PSC = 1600 - 1;  // Prescaler for 1kHz PWM frequency
-    TIM3->ARR = 100;       // Auto-reload value for 100 steps
-    TIM3->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2; // PWM mode 1 on Channel 1
-    TIM3->CCER |= TIM_CCER_CC1E;        // Enable capture/compare for channel 1
-    TIM3->CR1 |= TIM_CR1_CEN;           // Enable timer
+
+    GPIOA->AFR[1] &= ~(0xF << ((10 - 8) * 4));  // Clear the current AF setting for PA10
+    GPIOA->AFR[1] |= (2 << ((10 - 8) * 4));    // Set the correct AF (AF2) for TIM1_CH3 for PA10
+
+    TIM1->PSC = 1600 - 1;  // Prescaler for 1kHz PWM frequency
+    TIM1->ARR = 100;       // Auto-reload value for 100 steps
+    TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2; // PWM mode 1 on Channel 3
+    TIM1->CCER |= TIM_CCER_CC3E;        // Enable capture/compare for channel 3
+    TIM1->BDTR |= TIM_BDTR_MOE;         // Main output enable (needed for TIM1)
+    TIM1->CR1 |= TIM_CR1_CEN;           // Enable timer
 }

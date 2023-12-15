@@ -4,8 +4,10 @@
 
 void init_keypad();
 
-void EXT0_1_IRQHandler(vioid){
-	clerrowsblablabla
+/*
+
+void EXT0_1_IRQHandler(void){
+	Clearrows();
 
 	GPIOA->ODR ^= (1U<<8);
 	if ((GPIOB->IDR >>0)&1){
@@ -31,6 +33,25 @@ void EXT0_1_IRQHandler(vioid){
 			};
 	GPIOB->ODR ^= (1U<<4);
 };
+*/
+void EXT0_1_IRQHandler(void) {
+    scan_keypad();
+    // Clear the interrupt flag
+    EXTI->RPR1 = (1U << 0);  // Clear the pending bit for EXTI line 0
+}
+
+void EXT2_3_IRQHandler(void) {
+    scan_keypad();
+    // Clear the interrupt flag
+    EXTI->RPR2 = (1U << 0);  // Clear the pending bit for EXTI line 0
+}
+
+void EXT4_15_IRQHandler(void) {
+    scan_keypad();
+    // Clear the interrupt flag
+    EXTI->RPR4 = (1U << 0);  // Clear the pending bit for EXTI line 0
+}
+
 
 void main(){
 	while(1){
@@ -92,7 +113,10 @@ void init_keypad(){
 	NVIC_SetPriority(EXTI4_15_IRQn, 0);
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
 
+}
 
+
+int scan_keypad() {
 
 
 }
