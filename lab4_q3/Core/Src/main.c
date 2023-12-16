@@ -3,6 +3,8 @@
 
 uint8_t updateStatus();
 
+void PWM_Init();
+
 volatile uint8_t counter = 0;
 uint32_t isr = 0;
 uint32_t tdr = 0;
@@ -32,6 +34,7 @@ int matrix[4][4] = {{1,2,3,A},
 
 uint8_t uart_transmit_flag = 0;
 uint8_t dutycycle_raw = 0;
+uint8_t dutycycle;
 
 
 void init_keypad();
@@ -47,15 +50,17 @@ int main(){
 	UART_Init();
 	init_keypad();
 	SysTickInit();
-
+    PWM_Init();
 	char str_dutycycle[4];
 	while(1){
-
-		utoa(dutycycle_raw,str_dutycycle, 10);
+		utoa(dutycycle,str_dutycycle, 10);
+		print("Current Duty Cycle: %");
 		for(int i=0;i<4;i++)
 		{
 			uart_tx(str_dutycycle[i]);
 		}
+		print("\n\r");
+
 		delay_ms(2000);
 		temp_counter = counter;
 
@@ -116,8 +121,6 @@ void init_keypad(){
 
 	NVIC_SetPriority(EXTI4_15_IRQn, 2);
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
-
-
 }
 
 void scan_keypad(uint8_t row)
@@ -153,7 +156,9 @@ void scan_keypad(uint8_t row)
 	uint8_t current_num = matrix[row-1][column];
 	if(current_num == send)
 	{
-		uart_transmit_flag = 1;
+		setDutyCycle(dutycycle_raw);
+		dutycycle = dutycycle_raw;
+		dutycycle_raw = 0;
 	}
 	else if(current_num == clear)
 	{
@@ -262,7 +267,6 @@ void print(char *s)
 void uart_tx(uint8_t c)
 {
 	printChar(c);
-
 }
 
 uint8_t uart_rx(void)
@@ -294,5 +298,30 @@ void delay_ms(uint32_t delay) {
 
 void SysTick_Handler(void) {
     millis++; // Increment millis value
+}
+
+void setDutyCycle(uint16_t dutyCycle)
+{
+	TIM1->CCR3 = dutyCycle;
+}
+
+void PWM_Init() {
+    RCC->IOPENR |= RCC_IOPENR_GPIOAEN;   // Enable GPIOA clock
+    RCC->APBENR2 |= RCC_APBENR2_TIM1EN;  // Enable TIM1 clock
+
+    GPIOA->MODER &= ~GPIO_MODER_MODE10;   // Clear mode bits for PA10
+    GPIOA->MODER |= GPIO_MODER_MODE10_1;  // Set PA10 to Alternate Function mode
+
+
+    GPIOA->AFR[1] &= ~(0xF << ((10 - 8) * 4));  // Clear the current AF setting for PA10
+    GPIOA->AFR[1] |= (2 << ((10 - 8) * 4));    // Set the correct AF (AF2) for TIM1_CH3 for PA10
+
+    TIM1->PSC = 1600 - 1;  // Prescaler for 1kHz PWM frequency
+    TIM1->ARR = 100;       // Auto-reload value for 100 steps
+    TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2; // PWM mode 1 on Channel 3
+    TIM1->CCER |= TIM_CCER_CC3E;        // Enable capture/compare for channel 3
+    TIM1->BDTR |= TIM_BDTR_MOE;         // Main output enable (needed for TIM1)
+    TIM1->CR1 |= TIM_CR1_CEN;           // Enable timer
+    setDutyCycle(0);
 }
 
