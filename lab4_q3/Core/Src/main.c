@@ -1,8 +1,8 @@
 #include "stm32g0xx.h"
 
 
-
 void init_keypad();
+uint8_t scan_keypad(uint8_t row);
 
 /*
 
@@ -35,28 +35,36 @@ void EXT0_1_IRQHandler(void){
 };
 */
 void EXT0_1_IRQHandler(void) {
-    scan_keypad();
+    //scan_keypad();
     // Clear the interrupt flag
-    EXTI->RPR1 = (1U << 0);  // Clear the pending bit for EXTI line 0
+    EXTI->RPR1 = EXTI_RPR1_RPIF0;  // Clear the pending bit for EXTI line 0
 }
 
 void EXT2_3_IRQHandler(void) {
-    scan_keypad();
+    //scan_keypad();
     // Clear the interrupt flag
-    EXTI->RPR2 = (1U << 0);  // Clear the pending bit for EXTI line 0
+    EXTI->RPR1 = EXTI_RPR1_RPIF2;  // Clear the pending bit for EXTI line 0
 }
 
 void EXT4_15_IRQHandler(void) {
-    scan_keypad();
+    //scan_keypad();
     // Clear the interrupt flag
-    EXTI->RPR4 = (1U << 0);  // Clear the pending bit for EXTI line 0
+    if(!(EXTI->RPR1|EXTI_RPR1_RPIF8))
+    {
+        EXTI->RPR1 |= EXTI_RPR1_RPIF8;  // Set the pending bit for EXTI line 0
+    }
+    if(!(EXTI->RPR1|EXTI_RPR1_RPIF9))
+    {
+        EXTI->RPR1 |= EXTI_RPR1_RPIF9;  // Clear the pending bit for EXTI line 0
+    }
 }
 
 
-void main(){
+int main(){
 	while(1){
 
 	}
+	return 0;
 }
 
 
@@ -64,7 +72,7 @@ void main(){
 
 void init_keypad(){
 	RCC->IOPENR |= RCC_IOPENR_GPIOAEN |  RCC_IOPENR_GPIOBEN;
-
+/*
 	GPIOA ->MODER &= ~GPIO_MODER_MODE9_Msk;
 	GPIOA ->MODER |= GPIO_MODER_MODE9_0;
 	GPIOA ->MODER &= ~GPIO_MODER_MODE8_Msk;
@@ -80,11 +88,28 @@ void init_keypad(){
 	GPIOB ->MODER &= ~GPIO_MODER_MODE5_Msk;
 	GPIOB ->MODER |= GPIO_MODER_MODE5_1;
 
-
 	GPIOB ->MODER &= ~GPIO_MODER_MODE8_Msk;
 	GPIOB ->MODER |= GPIO_MODER_MODE8_0;
 	GPIOB ->MODER &= ~GPIO_MODER_MODE9_Msk;
 	GPIOB ->MODER |= GPIO_MODER_MODE9_1;
+*/
+	GPIOA->MODER &= ~(GPIO_MODER_MODE9_Msk|GPIO_MODER_MODE8_Msk);
+	GPIOA->MODER |= GPIO_MODER_MODE9_0 | GPIO_MODER_MODE8_1;
+
+	GPIOB->MODER &= ~(GPIO_MODER_MODE0_Msk|
+					GPIO_MODER_MODE2_Msk|
+					GPIO_MODER_MODE4_Msk|
+					GPIO_MODER_MODE5_Msk|
+					GPIO_MODER_MODE8_Msk|
+					GPIO_MODER_MODE9_Msk);
+
+	GPIOB->MODER |= GPIO_MODER_MODE0_0|
+					GPIO_MODER_MODE2_0|
+					GPIO_MODER_MODE4_1|
+					GPIO_MODER_MODE5_1|
+					GPIO_MODER_MODE8_0|
+					GPIO_MODER_MODE9_1;
+
 
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPD9_1;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPD0_1 | GPIO_PUPDR_PUPD2_1 | GPIO_PUPDR_PUPD8_1;
@@ -116,7 +141,8 @@ void init_keypad(){
 }
 
 
-int scan_keypad() {
+uint8_t scan_keypad(uint8_t row)
+{
 
-
+	return 0;
 }
