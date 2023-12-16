@@ -1,6 +1,8 @@
 #include "stm32g0xx.h"
 #include "stdlib.h"
 
+uint8_t updateStatus();
+
 volatile uint8_t counter = 0;
 uint32_t isr = 0;
 uint32_t tdr = 0;
@@ -35,20 +37,20 @@ uint8_t dutycycle_raw = 0;
 void init_keypad();
 void scan_keypad(uint8_t row);
 
-void EXT0_1_IRQHandler(void);
-void EXT2_3_IRQHandler(void);
-void EXT4_15_IRQHandler(void);
+void EXTI0_1_IRQHandler(void);
+void EXTI2_3_IRQHandler(void);
+void EXTI4_15_IRQHandler(void);
 
 
 
 int main(){
-	//UART_Init();
+	UART_Init();
 	init_keypad();
-	//SysTickInit();
+	SysTickInit();
 
 	char str_dutycycle[4];
 	while(1){
-		/*
+
 		utoa(dutycycle_raw,str_dutycycle, 10);
 		for(int i=0;i<4;i++)
 		{
@@ -56,21 +58,19 @@ int main(){
 		}
 		delay_ms(2000);
 		temp_counter = counter;
-		*/
+
 	}
 	return 0;
 }
 
 
 void init_keypad(){
-    // Enable GPIOA and GPIOB clocks
+
     RCC->IOPENR |= RCC_IOPENR_GPIOAEN | RCC_IOPENR_GPIOBEN;
 
-    // Configure GPIOA pins
     GPIOA->MODER &= ~(GPIO_MODER_MODE9_Msk | GPIO_MODER_MODE8_Msk);
-    GPIOA->MODER |= GPIO_MODER_MODE9_0 | GPIO_MODER_MODE8_1;
+    GPIOA->MODER |= GPIO_MODER_MODE8_0;
 
-    // Configure GPIOB pins
     GPIOB->MODER &= ~(GPIO_MODER_MODE0_Msk |
                       GPIO_MODER_MODE2_Msk |
                       GPIO_MODER_MODE4_Msk |
@@ -78,20 +78,20 @@ void init_keypad(){
                       GPIO_MODER_MODE8_Msk |
                       GPIO_MODER_MODE9_Msk);
 
-    GPIOB->MODER |= GPIO_MODER_MODE0_0 |
-                    GPIO_MODER_MODE2_0 |
-                    GPIO_MODER_MODE4_1 |
-                    GPIO_MODER_MODE5_1 |
-                    GPIO_MODER_MODE8_0 |
-                    GPIO_MODER_MODE9_1;
+    GPIOB->MODER |= GPIO_MODER_MODE4_0 |
+                    GPIO_MODER_MODE5_0 |
+                    GPIO_MODER_MODE9_0;
 
     // Set initial output levels
     GPIOA->ODR |= GPIO_ODR_OD8;
     GPIOB->ODR |= GPIO_ODR_OD9 | GPIO_ODR_OD5 | GPIO_ODR_OD4;
 
-/*
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD9_Msk;
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD0_Msk | GPIO_PUPDR_PUPD2_Msk | GPIO_PUPDR_PUPD8_Msk;
+
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPD9_1;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPD0_1 | GPIO_PUPDR_PUPD2_1 | GPIO_PUPDR_PUPD8_1;
+	RCC->APBENR2 |= (1U<<0); //APB peripheral clock enable register
 
 	EXTI->EXTICR[2] |= (0U << 8*1);
 	EXTI->EXTICR[0] |= (1U << 8*0);
@@ -108,50 +108,49 @@ void init_keypad(){
 	EXTI->IMR1 |= (1U<<2);
 	EXTI->IMR1 |= (1U<<8);
 
-	NVIC_SetPriority(EXTI0_1_IRQn, 0);
+	NVIC_SetPriority(EXTI0_1_IRQn, 2);
 	NVIC_EnableIRQ(EXTI0_1_IRQn);
 
-	NVIC_SetPriority(EXTI2_3_IRQn, 0);
+	NVIC_SetPriority(EXTI2_3_IRQn, 2);
 	NVIC_EnableIRQ(EXTI2_3_IRQn);
 
-	NVIC_SetPriority(EXTI4_15_IRQn, 0);
+	NVIC_SetPriority(EXTI4_15_IRQn, 2);
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
-*/
+
+
 }
 
 void scan_keypad(uint8_t row)
 {
+	delay_ms(20); //for debouncing
 	uint8_t column;
 
-	GPIOB->ODR ^= GPIO_ODR_OD8;
-	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
-		GPIOB->ODR ^= GPIO_ODR_OD8;
+	GPIOA->ODR &= ~GPIO_ODR_OD8;
+	if (!updateStatus()){
 		column = 0;
 	}
-	GPIOB->ODR ^= GPIO_ODR_OD8;
+	GPIOA->ODR |= GPIO_ODR_OD8;
 
-	GPIOB->ODR ^= GPIO_ODR_OD9;
-	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
-		GPIOB->ODR ^= GPIO_ODR_OD9;
+	GPIOB->ODR &= ~GPIO_ODR_OD9;
+
+	if (!updateStatus()){
 		column = 1;
 	}
-	GPIOB->ODR ^= GPIO_ODR_OD9;
+	GPIOB->ODR |= GPIO_ODR_OD9;
 
-	GPIOB->ODR ^= GPIO_ODR_OD5;
-	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
-		GPIOB->ODR ^= GPIO_ODR_OD5;
+	GPIOB->ODR &= ~GPIO_ODR_OD5;
+	if (!updateStatus()){
 		column = 2;
 	}
-	GPIOB->ODR ^= GPIO_ODR_OD5;
+	GPIOB->ODR |= GPIO_ODR_OD5;
 
-	GPIOB->ODR ^= GPIO_ODR_OD4;
-	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
-		GPIOB->ODR ^= GPIO_ODR_OD4;
+	GPIOB->ODR &= ~GPIO_ODR_OD4;
+	if (!updateStatus()){
 		column = 3;
 	}
-	GPIOB->ODR ^= GPIO_ODR_OD4;//if not first 3 column its the 4th column
+	GPIOB->ODR |= GPIO_ODR_OD4;//if not first 3 column its the 4th column
 
-	uint8_t current_num = matrix[row][column];
+	uint8_t current_num = matrix[row-1][column];
 	if(current_num == send)
 	{
 		uart_transmit_flag = 1;
@@ -162,18 +161,23 @@ void scan_keypad(uint8_t row)
 	}
 	else if(current_num < 10)
 	{
-		if(dutycycle_raw <= 100)
-		{
 			dutycycle_raw = 10*dutycycle_raw + current_num;
-		}
-		else
+		if(dutycycle_raw > 100)
 		{
-			dutycycle_raw = 100;
+			dutycycle_raw=100;
 		}
 	}
 }
 
-void EXT0_1_IRQHandler(void) {
+uint8_t updateStatus()
+{
+	return (GPIOA->IDR & GPIO_IDR_ID9) ||
+			(GPIOB->IDR & GPIO_IDR_ID0) ||
+			(GPIOB->IDR & GPIO_IDR_ID2) ||
+			(GPIOB->IDR & GPIO_IDR_ID8);
+}
+
+void EXTI0_1_IRQHandler(void) {
 	counter++;
 
     scan_keypad(2);
@@ -181,7 +185,7 @@ void EXT0_1_IRQHandler(void) {
     EXTI->RPR1 = EXTI_RPR1_RPIF0;  // Clear the pending bit for EXTI line 0
 }
 
-void EXT2_3_IRQHandler(void) {
+void EXTI2_3_IRQHandler(void) {
 	counter++;
 
     scan_keypad(3);
@@ -189,20 +193,20 @@ void EXT2_3_IRQHandler(void) {
     EXTI->RPR1 = EXTI_RPR1_RPIF2;  // Clear the pending bit for EXTI line 0
 }
 
-void EXT4_15_IRQHandler(void) {
+void EXTI4_15_IRQHandler(void) {
 	counter++;
 
     // Clear the interrupt flag
-    if(!(EXTI->RPR1|EXTI_RPR1_RPIF8))
+    if((EXTI->RPR1&EXTI_RPR1_RPIF8))
     {
     	scan_keypad(4);
-        EXTI->RPR1 |= EXTI_RPR1_RPIF8;  // Set the pending bit for EXTI line 0
     }
-    if(!(EXTI->RPR1|EXTI_RPR1_RPIF9))
+    if((EXTI->RPR1&EXTI_RPR1_RPIF9))
     {
     	scan_keypad(1);
-        EXTI->RPR1 |= EXTI_RPR1_RPIF9;  // Clear the pending bit for EXTI line 0
     }
+    EXTI->RPR1 |= EXTI_RPR1_RPIF8;
+    EXTI->RPR1 |= EXTI_RPR1_RPIF9;
 }
 
 void UART_Init()
