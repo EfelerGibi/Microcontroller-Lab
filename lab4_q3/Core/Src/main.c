@@ -1,17 +1,13 @@
 #include "stm32g0xx.h"
 #include "stdlib.h"
 
-uint8_t updateStatus();
-
-void PWM_Init();
-
 volatile uint8_t counter = 0;
-uint32_t isr = 0;
-uint32_t tdr = 0;
 volatile uint32_t millis = 0;
-void setDutyCycle(uint16_t dutyCycle);
 void delay_ms(uint32_t delay);
 void SysTickInit();
+
+void PWM_Init();
+void setDutyCycle(uint16_t dutyCycle);
 
 void UART_Init();
 void printChar(uint8_t c);
@@ -35,7 +31,7 @@ int matrix[4][4] = {{1,2,3,A},
 uint8_t uart_transmit_flag = 0;
 uint8_t dutycycle_raw = 0;
 uint8_t dutycycle;
-
+uint8_t updateStatus();
 
 void init_keypad();
 void scan_keypad(uint8_t row);
@@ -43,8 +39,6 @@ void scan_keypad(uint8_t row);
 void EXTI0_1_IRQHandler(void);
 void EXTI2_3_IRQHandler(void);
 void EXTI4_15_IRQHandler(void);
-
-
 
 int main(){
 	UART_Init();
