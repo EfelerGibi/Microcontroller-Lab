@@ -1,4 +1,4 @@
-#include "stm32g0xx.h"  // Include the device header
+#include "stm32g0xx.h"
 
 volatile uint32_t millis = 0;
 
@@ -17,7 +17,6 @@ int main(void) {
 
     while (1) {
 
-        delay_ms(10);  // Control speed of brightness change
     }
 }
 
@@ -32,14 +31,16 @@ void SysTickInit() {
     NVIC_SetPriority(SysTick_IRQn, 0);
 }
 
+void SysTick_Handler(void) {
+    millis++;  // Increment millis value
+}
+
+
 void delay_ms(uint32_t delay) {
     millis = 0;
     while (millis < delay);
 }
 
-void SysTick_Handler(void) {
-    millis++;  // Increment millis value
-}
 
 void setDutyCycle(uint16_t dutyCycle) {
     TIM1->CCR3 = dutyCycle;  // Set duty cycle for TIM1 channel 3
