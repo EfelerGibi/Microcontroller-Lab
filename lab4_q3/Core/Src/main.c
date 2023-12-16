@@ -2,7 +2,7 @@
 
 
 void init_keypad();
-uint8_t scan_keypad(uint8_t row);
+uint8_t scan_keypad();
 
 /*
 
@@ -141,8 +141,29 @@ void init_keypad(){
 }
 
 
-uint8_t scan_keypad(uint8_t row)
+uint8_t scan_keypad()
 {
 
-	return 0;
+	GPIOB->ODR ^= GPIO_ODR_OD8;
+	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
+		GPIOB->ODR ^= GPIO_ODR_OD8;
+		return 0;
+	}
+	GPIOB->ODR ^= GPIO_ODR_OD8;
+
+	GPIOB->ODR ^= GPIO_ODR_OD9;
+	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
+		GPIOB->ODR ^= GPIO_ODR_OD9;
+		return 1;
+	}
+	GPIOB->ODR ^= GPIO_ODR_OD9;
+
+	GPIOB->ODR ^= GPIO_ODR_OD5;
+	if (~((GPIOA->IDR | GPIO_IDR_ID8)| (GPIOB->IDR | GPIO_IDR_ID4)|(GPIOB->IDR | GPIO_IDR_ID5)|(GPIOB->IDR | GPIO_IDR_ID9))){
+		GPIOB->ODR ^= GPIO_ODR_OD5;
+		return 2;
+	}
+	GPIOB->ODR ^= GPIO_ODR_OD5;
+
+	return 3;//if not first 3 column its the 4th column
 }
