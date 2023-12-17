@@ -1,9 +1,7 @@
 #include "stm32g0xx.h"
 
-volatile uint32_t millis = 0;
 
-void SysTickInit();
-void delay_ms(uint32_t delay);
+
 void PWM_Init();
 void setDutyCycle(uint16_t dutyCycle);
 
@@ -12,35 +10,12 @@ volatile int direction = 1;
 
 
 int main(void) {
-    SysTickInit();
     PWM_Init();
 
     while (1) {
 
     }
 }
-
-void SysTickInit() {
-    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;   // Enable SysTick
-    SysTick->LOAD = 16000 - 1;                  // Load 16000 for 1ms tick at 16 MHz clock
-    SysTick->VAL = 0;                           // Reset SysTick
-    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;  // Enable SysTick interrupt
-    SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;// Set clock source
-
-    NVIC_EnableIRQ(SysTick_IRQn);
-    NVIC_SetPriority(SysTick_IRQn, 0);
-}
-
-void SysTick_Handler(void) {
-    millis++;  // Increment millis value
-}
-
-
-void delay_ms(uint32_t delay) {
-    millis = 0;
-    while (millis < delay);
-}
-
 
 void setDutyCycle(uint16_t dutyCycle) {
     TIM1->CCR3 = dutyCycle;  // Set duty cycle for TIM1 channel 3
