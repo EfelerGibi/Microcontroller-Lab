@@ -14,6 +14,7 @@ void uart_tx(uint8_t c);
 int main()
 {
 	UART_Init();
+	print("Hello World!");
 	while(1)
 	{
 
