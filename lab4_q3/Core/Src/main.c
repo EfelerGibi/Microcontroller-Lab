@@ -142,7 +142,6 @@ void init_keypad(){
 // This function is for the logic for when keypad is pressed
 void scan_keypad(uint8_t row)
 {
-    delay_ms(20); // Delay for debouncing
     uint8_t column;
 
     // Check each column to identify the pressed key
@@ -207,6 +206,7 @@ void EXTI0_1_IRQHandler(void) {
     counter++; //to count how many times the interrupts are called
 
     scan_keypad(1); // Scan keypad for row 2
+    delay_ms(500); // Delay for debouncing
     EXTI->RPR1 = EXTI_RPR1_RPIF0;  // Clear the pending bit for EXTI line 0
 }
 
@@ -215,7 +215,9 @@ void EXTI2_3_IRQHandler(void) {
     counter++;//to count how many times the interrupts are called
 
     scan_keypad(2); // Scan keypad for row 3
+    delay_ms(500); // Delay for debouncing
     EXTI->RPR1 = EXTI_RPR1_RPIF2;  // Clear the pending bit for EXTI line 2
+
 }
 
 // Interrupt handler for EXTI4_15
@@ -231,6 +233,7 @@ void EXTI4_15_IRQHandler(void) {
     {
         scan_keypad(0); // Scan keypad for row 1
     }
+    delay_ms(500); // Delay for debouncing
     EXTI->RPR1 |= EXTI_RPR1_RPIF8; // Clear the pending bit for EXTI line 8
     EXTI->RPR1 |= EXTI_RPR1_RPIF9; // Clear the pending bit for EXTI line 9
 }
