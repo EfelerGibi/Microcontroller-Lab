@@ -9,6 +9,7 @@ int D4;
 
 volatile uint32_t millis = 0;
 
+void initMic();
 void SysTickInit();
 void SysTick_Handler();
 void ButtonInit();
@@ -43,10 +44,12 @@ int main(void) {
 	ButtonInit();
 	PanelInit();
 	SysTickInit();
+	initMic();
 
 	setDigit(GPIO_ODR_OD6,0);
 	I2C_Init();
     while(1) {
+
     }
     return 0;
 }
@@ -105,9 +108,17 @@ void ButtonInit()
 }
 
 void EXTI0_1_IRQHandler(void){
-	EXTI->FPR1 |= (1<<0); //EXTI falling edge pending register 1 (EXTI_FPR1)
 	counter = 0;
 	GPIOC->ODR &= ~(1U << 6);
+	EXTI->FPR1 |= (1<<0); //EXTI falling edge pending register 1 (EXTI_FPR1)
+}
+
+void EXTI4_15_IRQHandler(){
+
+	counter++;
+	delay_ms(100); // Delay for debouncing
+	EXTI->RPR1 = EXTI_RPR1_RPIF9;  // Clear the pending bit for EXTI line 2
+
 }
 
 void PanelInit()
@@ -216,5 +227,25 @@ void I2C_Write(uint8_t devAddr, uint16_t regAddr, uint8_t data)
 	I2C1->TXDR = (uint32_t)data;
 }
 
+
+void initMic(){
+	 // Enable the clock for GPIO port B
+	    RCC->IOPENR |= RCC_IOPENR_GPIOBEN;
+
+	    // Configure PB9 as input
+	    GPIOB->MODER &= ~GPIO_MODER_MODE9_Msk;  // Clear mode bits for PB9
+
+
+		EXTI->EXTICR[2]|= (1U << 8*1);
+
+	    // Enable SYSCFG clock
+	    RCC->APBENR2 |= RCC_APBENR2_SYSCFGEN;
+
+	    EXTI->IMR1 |= (1U<<9);
+	    EXTI->RTSR1 |= (1U << 9);
+
+	    NVIC_SetPriority(EXTI4_15_IRQn, 2);
+	    NVIC_EnableIRQ(EXTI4_15_IRQn);
+}
 
 
