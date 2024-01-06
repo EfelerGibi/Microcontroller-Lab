@@ -15,7 +15,8 @@ void ButtonInit();
 void setPanel();
 void PanelInit();
 void setDigit(uint32_t mask,int digit);
-
+void I2C_Init();
+void I2C_Read();
 
 static const uint8_t digitPins[16] = {
     0x3F, // 0
@@ -44,7 +45,7 @@ int main(void) {
 	SysTickInit();
 
 	setDigit(GPIO_ODR_OD6,0);
-
+	I2C_Init();
     while(1) {
     }
     return 0;
@@ -134,6 +135,85 @@ void PanelInit()
 	GPIOA->ODR |= GPIO_ODR_OD4;
 	GPIOA->ODR |= GPIO_ODR_OD5;
 	GPIOA->ODR |= GPIO_ODR_OD6;
+}
+
+void I2C_Init()
+{
+	RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
+
+	GPIOA->MODER &= ~(GPIO_MODER_MODE9|
+					  GPIO_MODER_MODE10);
+	GPIOA->MODER |= (GPIO_MODER_MODE9_1|
+					 GPIO_MODER_MODE10_1);
+
+	GPIOA->OTYPER |= (GPIO_OTYPER_OT9|
+				 	  GPIO_OTYPER_OT10);
+
+	GPIOB->AFR[1] &= (0xFU << 0);
+	GPIOB->AFR[1] |= (6 << 0);
+
+	GPIOA->AFR[1] &= ~(GPIO_AFRH_AFSEL9|GPIO_AFRH_AFSEL10);
+	GPIOA->AFR[1] |= (GPIO_AFRH_AFSEL9|GPIO_AFRH_AFSEL10);
+
+	RCC->APBENR1 |= RCC_APBENR1_I2C1EN;
+
+	I2C1->CR1 = 0;
+	I2C1->CR1 |= I2C_CR1_ERRIE;
+
+	I2C1->TIMINGR |= (3<<28);
+	I2C1->TIMINGR |= (0x13<<0);
+	I2C1->TIMINGR |= (0xF<<8);
+	I2C1->TIMINGR |= (0x2<<16);
+	I2C1->TIMINGR |= (0x4<<20);
+
+	I2C1->CR1 = I2C_CR1_PE;
+
+	NVIC_SetPriority(I2C1_IRQn, 1);
+	NVIC_EnableIRQ(I2C1_IRQn);
+}
+
+void read_I2C(uint8_t devAddr, uint8_t regAddr, uint8_t* data, uint32_t num)
+{
+	I2C1->CR2 = 0; //Clear
+	I2C1->CR2 |= (uint32_t)devAddr << 1; //Slave adress
+	I2C1->CR2 |= 1U << 16;
+	I2C1->CR2 |= I2C_CR2_START;
+	while(!(I2C1->ISR & I2C_ISR_TXIS)); //
+
+	I2C1->TXDR = (uint32_t)regAddr;
+	while(!(I2C1->ISR & I2C_ISR_TC));
+
+	I2C1->CR2 = 0;
+	I2C1->CR2 |= ((uint32_t)devAddr << 1);
+	I2C1->CR2 |= I2C_CR2_RD_WRN;
+	I2C1->CR2 |= (num << 16);
+	I2C1->CR2 |= I2C_CR2_NACK;
+	I2C1->CR2 |= I2C_CR2_AUTOEND;
+	I2C1->CR2 |= I2C_CR2_START;
+
+	for(int i=0; i<num; i++)
+	{
+		while(!(I2C1->ISR & I2C_ISR_RXNE));
+		data[i] = (uint8_t) I2C1->RXDR;
+	}
+}
+
+void I2C_Write(uint8_t devAddr, uint16_t regAddr, uint8_t data)
+{
+	I2C1->CR2 = 0;
+	I2C1->CR2 |= ((uint32_t)devAddr << 1); // slave adress
+	I2C1->CR2 |= (3U << 16);
+	I2C1->CR2 |= I2C_CR2_AUTOEND;
+	I2C1->CR2 |= I2C_CR2_START;
+
+	while(!(I2C1->ISR & I2C_ISR_TXIS));
+	I2C1->TXDR = (uint32_t)regAddr;
+
+	while(!(I2C1->ISR & I2C_ISR_TXIS));
+	I2C1->TXDR = (uint32_t)regAddr;
+
+	while(!(I2C1->ISR & I2C_ISR_TXIS));
+	I2C1->TXDR = (uint32_t)data;
 }
 
 

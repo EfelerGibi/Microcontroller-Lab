@@ -106,8 +106,8 @@ void ADC_Init()
 	ADC1->SMPR |= 0b111;
 	ADC1->CHSELR |= ADC_CHSELR_CHSEL7;
 
-	ADC1->CR |= ADC_CR_ADEN;
-	ADC1->CR |= ADC_CR_ADSTART;
+	ADC1->CR |= ADC_CR_ADEN; //ADC enable
+	ADC1->CR |= ADC_CR_ADSTART; //ADC start
 }
 
 uint32_t readADC()
