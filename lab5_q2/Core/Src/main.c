@@ -2,6 +2,8 @@
 
 #define TIM_AutoReload 16000//1600
 uint16_t counter = 0;
+uint32_t timer_counter = 0;
+
 int D1;
 int D2;
 int D3;
@@ -13,11 +15,16 @@ void initMic();
 void SysTickInit();
 void SysTick_Handler();
 void ButtonInit();
+void Timer2Init();
+void EnableTimer();
+void DisableTimer();
 void setPanel();
 void PanelInit();
 void setDigit(uint32_t mask,int digit);
 void I2C_Init();
 void I2C_Read();
+void delay_ms(uint32_t delay);
+
 
 static const uint8_t digitPins[16] = {
     0x3F, // 0
@@ -45,11 +52,23 @@ int main(void) {
 	PanelInit();
 	SysTickInit();
 	initMic();
-
 	setDigit(GPIO_ODR_OD6,0);
+	//Timer2Init();
 	I2C_Init();
     while(1) {
+    	D1 = counter/1000;
+    	D2 = (counter%1000)/100;
+    	D3 = (counter%100)/10;
+    	D4 = counter%10;
 
+    	setDigit(GPIO_ODR_OD6,D4);
+    	delay_ms(1);
+    	setDigit(GPIO_ODR_OD5,D3);
+    	delay_ms(1);
+    	setDigit(GPIO_ODR_OD4,D2);
+    	delay_ms(1);
+    	setDigit(GPIO_ODR_OD1,D1);
+    	delay_ms(1);
     }
     return 0;
 }
@@ -119,6 +138,54 @@ void EXTI4_15_IRQHandler(){
 	delay_ms(100); // Delay for debouncing
 	EXTI->RPR1 = EXTI_RPR1_RPIF9;  // Clear the pending bit for EXTI line 2
 
+}
+
+void Timer2Init()
+{
+	RCC->APBENR1 |= RCC_APBENR1_TIM2EN_Msk;
+
+	TIM2->CNT = 0;
+	TIM2->PSC = 160;
+	TIM2->ARR = (uint32_t) 25;//1600
+	TIM2->DIER |= (1U<<0);
+
+	NVIC_EnableIRQ(TIM2_IRQn);
+	NVIC_SetPriority(TIM2_IRQn,3);
+	TIM2->SR &= ~(1U<<0);
+
+	TIM2->EGR |= (1U<<0); // Reset timer
+
+	EnableTimer(TIM2);
+}
+
+void EnableTimer(TIM_TypeDef* TIM)
+{
+	TIM->CR1 |= (1U<<0);
+}
+
+void DisableTimer(TIM_TypeDef* TIM)
+{
+	TIM->CR1 &= ~(1U<<0);
+}
+
+void TIM2_IRQHandler(void){
+	TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
+
+	D1 = counter/1000;
+	D2 = (counter%1000)/100;
+	D3 = (counter%100)/10;
+	D4 = counter%10;
+
+	setDigit(GPIO_ODR_OD6,D4);
+	delay_ms(1);
+	setDigit(GPIO_ODR_OD5,D3);
+	delay_ms(1);
+	setDigit(GPIO_ODR_OD4,D2);
+	delay_ms(1);
+	setDigit(GPIO_ODR_OD1,D1);
+	delay_ms(1);
+
+	timer_counter = TIM2->CNT;
 }
 
 void PanelInit()
