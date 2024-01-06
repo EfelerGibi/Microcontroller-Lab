@@ -2,12 +2,19 @@
 
 void PWM_Init();
 void SysTickInit();
+void SysTick_Handler();
+void setDutyCycle(uint16_t dutyCycle, uint8_t channel);
+
+volatile uint32_t millis = 0;
 
 int main(){
 	SysTickInit();
     PWM_Init();
-    setDutyCycle(50, 2);
-    setDutyCycle(50, 3);
+    setDutyCycle(10, 2);
+    setDutyCycle(10, 3);
+    while(1)
+    {}
+    return 0;
 }
 
 void SysTickInit() {
@@ -57,18 +64,20 @@ void PWM_Init() {
     GPIOA->AFR[1] |= (2 << ((10 - 8) * 4));    // Set the AF (AF2) for TIM1_CH3 for PA10
 
     GPIOA->AFR[1] &= ~(0xF << ((9 - 8) * 4));  // Clear the current AF setting for PA9
-    GPIOA->AFR[1] |= (2 << ((9 - 8) * 4));    // Set the AF (AF2) for TIM1_CH3 for PA9
+    GPIOA->AFR[1] |= (2 << ((9 - 8) * 4));    // Set the AF (AF2) for TIM1_CH2 for PA9
 
     TIM1->PSC = 1600 - 1;  // Prescaler for 1kHz PWM frequency
     TIM1->ARR = 100;       // Auto-reload value for 100 steps, this is for 1% increments
 
     TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2; // PWM mode 1 on Channel 3
-    TIM1->CCMR2 |= TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2; // PWM mode 1 on Channel 2
+    TIM1->CCMR1 |= TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2; // PWM mode 1 on Channel 2
 
     TIM1->CCER |= TIM_CCER_CC3E;        // Enable capture/compare for channel 3
     TIM1->CCER |= TIM_CCER_CC2E;        // Enable capture/compare for channel 3
 
     TIM1->BDTR |= TIM_BDTR_MOE;         // Main output enable (needed for TIM1)
     TIM1->CR1 |= TIM_CR1_CEN;           // Enable timer
-    setDutyCycle(0); //set initial duty cycle to 0
+    setDutyCycle(0, 2); //set initial duty cycle to 0
+    setDutyCycle(0, 3); //set initial duty cycle to 0
+
 }
