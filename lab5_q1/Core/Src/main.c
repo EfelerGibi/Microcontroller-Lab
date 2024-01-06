@@ -1,19 +1,29 @@
 #include "stm32g0xx.h"
 
 void PWM_Init();
+void ADC_Init();
 void SysTickInit();
 void SysTick_Handler();
 void setDutyCycle(uint16_t dutyCycle, uint8_t channel);
+uint32_t readADC();
 
 volatile uint32_t millis = 0;
+uint32_t dutyCycle = 0;
 
 int main(){
 	SysTickInit();
     PWM_Init();
+    ADC_Init();
+
     setDutyCycle(10, 2);
     setDutyCycle(10, 3);
+
     while(1)
-    {}
+    {
+    	dutyCycle = (uint16_t) readADC()*100/4095;
+    	setDutyCycle(dutyCycle, 2);
+    	setDutyCycle(100-dutyCycle, 3);
+    }
     return 0;
 }
 
@@ -81,3 +91,31 @@ void PWM_Init() {
     setDutyCycle(0, 3); //set initial duty cycle to 0
 
 }
+
+
+void ADC_Init()
+{
+	//PA7
+	RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
+	RCC->APBENR2 |= RCC_APBENR2_ADCEN;
+	GPIOA->MODER |= GPIO_MODER_MODE7; //Set PA7 as analog
+
+	//ADC1->CFGR1 &= ~ADC_CFGR1_CHSELRMOD;
+	ADC1->CFGR1 |= ADC_CFGR1_CONT; //Enable continuous conversion mode
+	ADC1->SMPR |= ADC_SMPR_SMPSEL7;
+	ADC1->SMPR |= 0b111;
+	ADC1->CHSELR |= ADC_CHSELR_CHSEL7;
+
+	ADC1->CR |= ADC_CR_ADEN;
+	ADC1->CR |= ADC_CR_ADSTART;
+}
+
+uint32_t readADC()
+{
+	while(!(ADC1->ISR & ADC_ISR_EOC))
+	{
+	}
+	return ADC1->DR;
+}
+
+
