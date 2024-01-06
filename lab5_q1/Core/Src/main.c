@@ -1,175 +1,74 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "stm32g0xx.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+void PWM_Init();
+void SysTickInit();
 
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+int main(){
+	SysTickInit();
+    PWM_Init();
+    setDutyCycle(50, 2);
+    setDutyCycle(50, 3);
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+void SysTickInit() {
+    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;   // Enable SysTick
+    SysTick->LOAD = 16000;                      // Load 16000 for 1ms tick
+    SysTick->VAL = 0;                           // Reset SysTick
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;  // SysTick Enable Interrupt
+    SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk; // SysTick clock source = AHB
 
-  /** Configure the main internal regulator output voltage
-  */
-  HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    NVIC_EnableIRQ(SysTick_IRQn);
+    NVIC_SetPriority(SysTick_IRQn, 0);
 }
 
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+void delay_ms(uint32_t delay) {
+    millis = 0;
+    while (millis < delay)
+    {
+        // Wait for the specified duration
+    }
 }
 
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
+void setDutyCycle(uint16_t dutyCycle, uint8_t channel)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	if (channel==2){
+		TIM1->CCR2 = dutyCycle;
+	}
+	else if (channel==3){
+		TIM1->CCR3 = dutyCycle;
+	}
 }
-#endif /* USE_FULL_ASSERT */
+void SysTick_Handler(void) {
+    millis++; // Increment millis value
+}
+
+void PWM_Init() {
+    RCC->IOPENR |= RCC_IOPENR_GPIOAEN;   // Enable GPIOA clock
+    RCC->APBENR2 |= RCC_APBENR2_TIM1EN;  // Enable TIM1 clock
+
+    GPIOA->MODER &= ~GPIO_MODER_MODE10;   // Clear mode bits for PA10
+    GPIOA->MODER &= ~GPIO_MODER_MODE9;   // Clear mode bits for PA09
+
+    GPIOA->MODER |= GPIO_MODER_MODE10_1;  // Set PA10 to Alternate Function mode
+    GPIOA->MODER |= GPIO_MODER_MODE9_1;  // Set PA9 to Alternate Function mode
+
+
+    GPIOA->AFR[1] &= ~(0xF << ((10 - 8) * 4));  // Clear the current AF setting for PA10
+    GPIOA->AFR[1] |= (2 << ((10 - 8) * 4));    // Set the AF (AF2) for TIM1_CH3 for PA10
+
+    GPIOA->AFR[1] &= ~(0xF << ((9 - 8) * 4));  // Clear the current AF setting for PA9
+    GPIOA->AFR[1] |= (2 << ((9 - 8) * 4));    // Set the AF (AF2) for TIM1_CH3 for PA9
+
+    TIM1->PSC = 1600 - 1;  // Prescaler for 1kHz PWM frequency
+    TIM1->ARR = 100;       // Auto-reload value for 100 steps, this is for 1% increments
+
+    TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2; // PWM mode 1 on Channel 3
+    TIM1->CCMR2 |= TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2; // PWM mode 1 on Channel 2
+
+    TIM1->CCER |= TIM_CCER_CC3E;        // Enable capture/compare for channel 3
+    TIM1->CCER |= TIM_CCER_CC2E;        // Enable capture/compare for channel 3
+
+    TIM1->BDTR |= TIM_BDTR_MOE;         // Main output enable (needed for TIM1)
+    TIM1->CR1 |= TIM_CR1_CEN;           // Enable timer
+    setDutyCycle(0); //set initial duty cycle to 0
+}
