@@ -140,53 +140,8 @@ void EXTI4_15_IRQHandler(){
 
 }
 
-void Timer2Init()
-{
-	RCC->APBENR1 |= RCC_APBENR1_TIM2EN_Msk;
 
-	TIM2->CNT = 0;
-	TIM2->PSC = 160;
-	TIM2->ARR = (uint32_t) 25;//1600
-	TIM2->DIER |= (1U<<0);
 
-	NVIC_EnableIRQ(TIM2_IRQn);
-	NVIC_SetPriority(TIM2_IRQn,3);
-	TIM2->SR &= ~(1U<<0);
-
-	TIM2->EGR |= (1U<<0); // Reset timer
-
-	EnableTimer(TIM2);
-}
-
-void EnableTimer(TIM_TypeDef* TIM)
-{
-	TIM->CR1 |= (1U<<0);
-}
-
-void DisableTimer(TIM_TypeDef* TIM)
-{
-	TIM->CR1 &= ~(1U<<0);
-}
-
-void TIM2_IRQHandler(void){
-	TIM2->SR &= ~(1<<0); // Clear UIF update interrupt flag
-
-	D1 = counter/1000;
-	D2 = (counter%1000)/100;
-	D3 = (counter%100)/10;
-	D4 = counter%10;
-
-	setDigit(GPIO_ODR_OD6,D4);
-	delay_ms(1);
-	setDigit(GPIO_ODR_OD5,D3);
-	delay_ms(1);
-	setDigit(GPIO_ODR_OD4,D2);
-	delay_ms(1);
-	setDigit(GPIO_ODR_OD1,D1);
-	delay_ms(1);
-
-	timer_counter = TIM2->CNT;
-}
 
 void PanelInit()
 {
